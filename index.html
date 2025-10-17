@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Circle Click Game</title>
+<style>
+body {
+    font-family: sans-serif;
+    text-align: center;
+}
+
+#game-container {
+    position: relative;
+    width: 500px;
+    height: 400px;
+    margin: 20px auto;
+    border: 1px solid #ccc;
+}
+
+.circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: red;
+    position: absolute;
+    cursor: pointer;
+}
+
+#score-board {
+    margin-top: 20px;
+}
+</style>
+</head>
+<body>
+
+<h1>Circle Click Game</h1>
+
+<div id="game-container">
+    <div class="circle"></div>
+</div>
+
+<div id="score-board">
+    Clicks: <span id="clicks">0</span><br>
+    Average Reaction Time: <span id="reaction-time">0</span> ms
+</div>
+
+<script>
+const gameContainer = document.getElementById('game-container');
+const circle = document.querySelector('.circle');
+const clicksSpan = document.getElementById('clicks');
+const reactionTimeSpan = document.getElementById('reaction-time');
+
+let clicks = 0;
+let totalReactionTime = 0;
+let startTime;
+
+function getRandomPosition() {
+    const width = gameContainer.offsetWidth - circle.offsetWidth;
+    const height = gameContainer.offsetHeight - circle.offsetHeight;
+
+    const x = Math.random() * width;
+    const y = Math.random() * height;
+
+    return { x: x, y: y };
+}
+
+function moveCircle() {
+    const position = getRandomPosition();
+    circle.style.left = position.x + 'px';
+    circle.style.top = position.y + 'px';
+    startTime = Date.now();
+}
+
+circle.addEventListener('click', function() {
+    const endTime = Date.now();
+    const reactionTime = endTime - startTime;
+
+    clicks++;
+    totalReactionTime += reactionTime;
+    const averageReactionTime = totalReactionTime / clicks;
+
+    clicksSpan.textContent = clicks;
+    reactionTimeSpan.textContent = averageReactionTime.toFixed(2);
+
+    moveCircle();
+});
+
+// Initial circle placement
+moveCircle();
+</script>
+
+</body>
+</html>
