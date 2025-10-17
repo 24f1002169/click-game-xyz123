@@ -7,85 +7,178 @@ body {
     font-family: sans-serif;
     text-align: center;
 }
-
 #game-container {
     position: relative;
-    width: 500px;
+    width: 400px;
     height: 400px;
     margin: 20px auto;
     border: 1px solid #ccc;
 }
-
 .circle {
     width: 50px;
     height: 50px;
-    border-radius: 50%;
     background-color: red;
+    border-radius: 50%;
     position: absolute;
     cursor: pointer;
 }
-
-#score-board {
+#stats {
     margin-top: 20px;
 }
 </style>
 </head>
 <body>
-
 <h1>Circle Click Game</h1>
+
+<label for="difficulty">Difficulty:</label>
+<select id="difficulty">
+    <option value="easy">Easy</option>
+    <option value="medium">Medium</option>
+    <option value="hard">Hard</option>
+</select>
 
 <div id="game-container">
     <div class="circle"></div>
 </div>
 
-<div id="score-board">
+<div id="stats">
     Clicks: <span id="clicks">0</span><br>
-    Average Reaction Time: <span id="reaction-time">0</span> ms
+    Average Reaction Time: <span id="avg-reaction">0</span> ms<br>
+    Time Left: <span id="time-left">30</span> seconds
 </div>
+
+<div id="final-score" style="display: none;">
+    Final Score: <span id="score">0</span>
+</div>
+
+<button id="reset">Reset</button>
 
 <script>
 const gameContainer = document.getElementById('game-container');
 const circle = document.querySelector('.circle');
 const clicksSpan = document.getElementById('clicks');
-const reactionTimeSpan = document.getElementById('reaction-time');
+const avgReactionSpan = document.getElementById('avg-reaction');
+const timeLeftSpan = document.getElementById('time-left');
+const finalScoreDiv = document.getElementById('final-score');
+const scoreSpan = document.getElementById('score');
+const resetBtn = document.getElementById('reset');
+const difficultySelect = document.getElementById('difficulty');
 
 let clicks = 0;
-let totalReactionTime = 0;
+let reactionTimes = [];
 let startTime;
+let timeLeft = 30;
+let gameActive = true;
+let difficulty = 'easy';
+let circleSize = 50;
+let circleSpeed = 1;
 
 function getRandomPosition() {
-    const width = gameContainer.offsetWidth - circle.offsetWidth;
-    const height = gameContainer.offsetHeight - circle.offsetHeight;
+    const containerWidth = gameContainer.offsetWidth;
+    const containerHeight = gameContainer.offsetHeight;
+    const circleWidth = circle.offsetWidth;
+    const circleHeight = circle.offsetHeight;
 
-    const x = Math.random() * width;
-    const y = Math.random() * height;
+    const x = Math.random() * (containerWidth - circleWidth);
+    const y = Math.random() * (containerHeight - circleHeight);
 
     return { x: x, y: y };
 }
 
 function moveCircle() {
-    const position = getRandomPosition();
-    circle.style.left = position.x + 'px';
-    circle.style.top = position.y + 'px';
-    startTime = Date.now();
+    if (!gameActive) return;
+
+    const newPosition = getRandomPosition();
+    circle.style.left = newPosition.x + 'px';
+    circle.style.top = newPosition.y + 'px';
 }
 
-circle.addEventListener('click', function() {
-    const endTime = Date.now();
-    const reactionTime = endTime - startTime;
-
-    clicks++;
-    totalReactionTime += reactionTime;
-    const averageReactionTime = totalReactionTime / clicks;
-
+function updateStats() {
     clicksSpan.textContent = clicks;
-    reactionTimeSpan.textContent = averageReactionTime.toFixed(2);
+    if (reactionTimes.length > 0) {
+        const sum = reactionTimes.reduce((a, b) => a + b, 0);
+        const avg = sum / reactionTimes.length;
+        avgReactionSpan.textContent = avg.toFixed(2);
+    } else {
+        avgReactionSpan.textContent = 0;
+    }
+}
 
+function endGame() {
+    gameActive = false;
+    circle.style.display = 'none';
+    finalScoreDiv.style.display = 'block';
+    scoreSpan.textContent = clicks;
+}
+
+function updateTimer() {
+    if (!gameActive) return;
+
+    timeLeft--;
+    timeLeftSpan.textContent = timeLeft;
+
+    if (timeLeft <= 0) {
+        endGame();
+    } else {
+        setTimeout(updateTimer, 1000);
+    }
+}
+
+function resetGame() {
+    clicks = 0;
+    reactionTimes = [];
+    timeLeft = 30;
+    gameActive = true;
+    finalScoreDiv.style.display = 'none';
+    circle.style.display = 'block';
+    clicksSpan.textContent = 0;
+    avgReactionSpan.textContent = 0;
+    timeLeftSpan.textContent = timeLeft;
+    updateDifficulty();
     moveCircle();
+    updateTimer();
+}
+
+function updateDifficulty() {
+    difficulty = difficultySelect.value;
+
+    if (difficulty === 'easy') {
+        circleSize = 50;
+        circleSpeed = 1;
+    } else if (difficulty === 'medium') {
+        circleSize = 35;
+        circleSpeed = 1.5;
+    } else {
+        circleSize = 20;
+        circleSpeed = 2;
+    }
+
+    circle.style.width = circleSize + 'px';
+    circle.style.height = circleSize + 'px';
+}
+
+circle.addEventListener('click', () => {
+    if (!gameActive) return;
+    if (!startTime) {
+        startTime = Date.now();
+    }
+    const reactionTime = Date.now() - startTime;
+    reactionTimes.push(reactionTime);
+    clicks++;
+    updateStats();
+    moveCircle();
+    startTime = Date.now();
 });
 
-// Initial circle placement
+resetBtn.addEventListener('click', resetGame);
+
+difficultySelect.addEventListener('change', () => {
+    updateDifficulty();
+});
+
+updateDifficulty();
 moveCircle();
+updateTimer();
 </script>
 
 </body>
